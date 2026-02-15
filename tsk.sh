@@ -1,0 +1,223 @@
+#!/usr/bin/bash
+
+# Echo + Colors
+echor() { echo -e "\e[31m$*\e[0m"; }
+echog() { echo -e "\e[32m$*\e[0m"; }
+echoy() { echo -e "\e[33m$*\e[0m"; }
+echob() { echo -e "\e[34m$*\e[0m"; }
+
+echob "  _______        _       ____                        _                _____           _           _   ";
+echob " |__   __|      | |     / __ \\                      (_)              |  __ \\         (_)         | |  ";
+echob "    | | __ _ ___| | __ | |  | |_ __ __ _  __ _ _ __  _ _______ _ __  | |__) | __ ___  _  ___  ___| |_ ";
+echob "    | |/ _\` / __| |/ / | |  | | '__/ _\` |/ _\` | '_ \\| |_  / _ \\ '__| |  ___/ '__/ _ \\| |/ _ \\/ __| __|";
+echob "    | | (_| \\__ \\   <  | |__| | | | (_| | (_| | | | | |/ /  __/ |    | |   | | | (_) | |  __/ (__| |_ ";
+echob "    |_|\\__,_|___/_|\\_\\  \\____/|_|  \\__, |\\__,_|_| |_|_/___\\___|_|    |_|   |_|  \\___/| |\\___|\\___|\\__|";
+echob "  ____                   _ _        __/ |             _                             _/ |              ";
+echob " |  _ \\            /\\   | (_)     /\\___/ |           | |                           |__/               ";
+echob " | |_) |_   _     /  \\  | |_     /  \\  | | __ _  ___ | |__   __ _ _ __ _   _                          ";
+echob " |  _ <| | | |   / /\\ \\ | | |   / /\\ \\ | |/ _\` |/ _ \\| '_ \\ / _\` | '__| | | |                         ";
+echob " | |_) | |_| |  / ____ \\| | |  / ____ \\| | (_| | (_) | | | | (_| | |  | |_| |                         ";
+echob " |____/ \\__, | /_/    \\_\\_|_| /_/    \\_\\_|\\__, |\\___/|_| |_|\\__,_|_|   \\__, |                         ";
+echob "         __/ |                             __/ |                        __/ |                         ";
+echob "        |___/                             |___/                        |___/                          ";
+
+valid(){
+    if [[ $1 == "" || $1 =~ \| ]]; then
+	echor "Not a valid input"
+	return 1
+    else
+	echog "Valid input"
+	return 0
+    fi 
+}
+
+add_task(){
+    echog ======= Add Task =======
+    read -p "Enter title: " title
+    valid "$title"
+    if [[ $? -eq 1 ]]; then
+	return 1
+    fi
+
+    read -p "Enter priority (h: high, m: medium, l: low): " pr
+    valid "$pr"
+    if [[ $? -eq 1 ]]; then
+	return 1
+    fi
+
+    if [[ $pr == "h" ]]; then priority="high";
+    elif [[ $pr == "m" ]]; then priority="medium";
+    elif [[ $pr == "l" ]]; then priority="low"; 
+    else echor "Not a valid priority"; return 1; fi
+    
+    read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
+    if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
+    echo Entered due date is: $dt
+    date -d $dt >/dev/null 2>&1
+    
+    if [[ $? -eq 1 ]]; then echor "Not a valid date"; return 1; fi
+
+    status="pending"
+    tid=1
+    tid=$(awk 'BEGIN {FS="|"; } END { print $1 }' $db_path)
+    if [[ $tid == "id" ]]; then tid=0; fi
+    
+    tid=$(($tid+1))
+
+    echog "$tid|$title|$priority|$dt|$status"
+    echo "$tid|$title|$priority|$dt|$status" >> $db_path
+    echog "Task added successfully"
+    
+}
+
+list_tasks(){
+    echog ======= List Tasks =======
+    cat $db_path | column -t -s "|"
+}
+
+update_task(){
+    echog ======= Update Task =======
+    list_tasks
+    read -p "Enter id of the task to be updated: " id
+    task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+    if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
+    
+    while [ 1 ]
+    do
+        task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+	echog $task
+        echo 1 Update title
+        echo 2 Update priority
+        echo 3 Update date
+        echo 4 Update status
+        echo 9 Quit
+        read -p "Enter your update choice: " update_choice
+
+        # If not a number
+        if [[ ! "$update_choice" =~ ^[0-9]+$ ]]; then
+            echor Not a valid choice
+        elif [[ $update_choice -eq 1 ]]; then
+	    read -p "Enter title: " title
+            valid "$title"
+            if [[ $? -eq 1 ]]; then
+                continue
+            fi
+            new=$(awk -F '|' -v id="$id" -v title="$title" -v OFS="|" '$1 == id {$2=title;print $0}' $db_path)
+	    sed -i "s/$task/$new/" $db_path
+            echog "Record updated successfully" 
+
+        elif [[ $update_choice -eq 2 ]]; then
+	    read -p "Enter new priority (h, m, l): " pr
+
+            if [[ $pr == "h" ]]; then priority="high";
+            elif [[ $pr == "m" ]]; then priority="medium";
+    	    elif [[ $pr == "l" ]]; then priority="low"; 
+            else echor "Not a valid priority"; continue; fi
+            
+            new=$(awk -F '|' -v id="$id" -v pri="$priority" -v OFS="|" '$1 == id {$3=pri;print $0}' $db_path)
+	    sed -i "s/$task/$new/" $db_path
+
+        elif [[ $update_choice -eq 3 ]]; then
+        
+	    read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
+            if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
+            echo Entered due date is: $dt
+            date -d $dt >/dev/null 2>&1
+   
+            if [[ $? -eq 1 ]]; then echor "Not a valid date"; continue; fi
+            
+	    new=$(awk -F '|' -v id="$id" -v dt="$dt" -v OFS="|" '$1 == id {$4=dt;print $0}' $db_path)
+	    sed -i "s/$task/$new/" $db_path
+            
+
+        elif [[ $update_choice -eq 4 ]]; then
+	    read -p "Enter new status (p: pending, i: in-progress, d: done): " st
+
+            if [[ $st == "p" ]]; then stat="pending";
+            elif [[ $st == "i" ]]; then stat="in-progress";
+    	    elif [[ $st == "d" ]]; then stat="done"; 
+            else echor "Not a valid status"; continue; fi
+            
+            new=$(awk -F '|' -v id="$id" -v stat="$stat" -v OFS="|" '$1 == id {$5=stat;print $0}' $db_path)
+	    sed -i "s/$task/$new/" $db_path
+            
+
+        elif [[ $update_choice -eq 9 ]]; then
+            echoy Quitting
+            break
+        else
+            echor Not a valid choice
+        fi
+        echoy "\n---------------\n"
+    done
+}
+
+delete_task(){
+    echog ======= Delete Task =======
+    list_tasks
+    read -p "Enter id of the task to be deleted: " id
+    task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+    if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
+    sed -i "/$task/d" $db_path
+    echog "Task deleted successfully" 
+}
+
+search_tasks(){
+    echog ======= Search Tasks =======
+    read -p "Enter search term: " query
+    head -1 $db_path | column -t -s "|"
+    # Do not include header when searching
+    tail -n +2 $db_path | column -t -s "|" | grep -i $query 
+}
+
+db_path="$(pwd)/tasks_db"
+test -f $db_path
+
+if [ $? -eq 0 ]; then
+    echog ===== using tasks from $db_path =====
+else
+    echo "id|title|priority|date|status" > $db_path
+    echog ===== Created tasks in $db_path =====
+fi
+
+choice=0
+while [ 1 ]
+do
+    echob 1 Add Task
+    echob 2 List Tasks
+    echob 3 Update Task
+    echob 4 Delete Task
+    echob 5 Search
+    echob 9 Quit
+    read -p "Enter your Choice: " choice
+    clear
+
+    # If not a number
+    if [[ ! "$choice" =~ ^[0-9]+$ ]]; then
+	echor Not a valid choice
+    elif [ $choice -eq 1 ]; then
+	add_task
+
+    elif [ $choice -eq 2 ]; then
+    	list_tasks
+
+    elif [ $choice -eq 3 ]; then
+    	update_task
+
+    elif [ $choice -eq 4 ]; then
+    	delete_task
+
+    elif [ $choice -eq 5 ]; then
+    	search_tasks
+
+    elif [ $choice -eq 9 ]; then
+    	echoy Quitting
+	break
+    else
+	echor Not a valid choice
+    fi
+    echoy "\n---------------\n"
+done
+
+
+
