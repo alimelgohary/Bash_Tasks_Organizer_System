@@ -40,10 +40,6 @@ add_task(){
     fi
 
     read -p "Enter priority (h: high, m: medium, l: low): " pr
-    valid "$pr"
-    if [[ $? -eq 1 ]]; then
-	return 1
-    fi
 
     if [[ $pr == "h" ]]; then priority="high";
     elif [[ $pr == "m" ]]; then priority="medium";
@@ -53,6 +49,7 @@ add_task(){
     read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
     if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
     echo Entered due date is: $dt
+    dt=$(date -d $dt +%F)
     date -d $dt >/dev/null 2>&1
     
     if [[ $? -eq 1 ]]; then echor "Not a valid date"; return 1; fi
@@ -97,7 +94,7 @@ update_task(){
         if [[ ! "$update_choice" =~ ^[0-9]+$ ]]; then
             echor Not a valid choice
         elif [[ $update_choice -eq 1 ]]; then
-	    read -p "Enter title: " title
+	    read -p "Enter new title: " title
             valid "$title"
             if [[ $? -eq 1 ]]; then
                 continue
@@ -122,8 +119,9 @@ update_task(){
 	    read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
             if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
             echo Entered due date is: $dt
-            date -d $dt >/dev/null 2>&1
-   
+            dt=$(date -d $dt +%F)
+	    date -d $dt >/dev/null 2>&1
+            
             if [[ $? -eq 1 ]]; then echor "Not a valid date"; continue; fi
             
 	    new=$(awk -F '|' -v id="$id" -v dt="$dt" -v OFS="|" '$1 == id {$4=dt;print $0}' $db_path)
@@ -165,9 +163,10 @@ delete_task(){
 search_tasks(){
     echog ======= Search Tasks =======
     read -p "Enter search term: " query
-    head -1 $db_path | column -t -s "|"
-    # Do not include header when searching
-    tail -n +2 $db_path | column -t -s "|" | grep -i $query 
+    header=$(head -1 $db_path)
+    query=${query,,}
+    res=$(tail -n +2 $db_path | awk -F '|' -v q="$query" 'tolower($2) ~ q')
+    echo -e "$header\n$res" | column -t -s "|"
 }
 
 db_path="$(pwd)/tasks_db"
