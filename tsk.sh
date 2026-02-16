@@ -270,7 +270,31 @@ reports(){
 		
 		echor "$res" | column -t -s "|"
 	    ;;
-	    3);;
+
+	    3)
+		echog ===== Priority Report =====
+    		header=$(head -1 $db_path)
+		
+		without_header=$(tail -n +2 $db_path)
+		res_high=$(echo -e "$without_header" | awk -F '|' '$3 == "high"')
+	        res_med=$(echo -e "$without_header" | awk -F '|' '$3 == "medium"')
+	        res_low=$(echo -e "$without_header" | awk -F '|' '$3 == "low"')
+
+	  	echor "You have $(echo -e "$res_high" | wc -l) high priority tasks"
+		echoy "You have $(echo -e "$res_med" | wc -l) medium priority tasks"
+		echog "You have $(echo -e "$res_low" | wc -l) low priority tasks"
+                echo
+
+		res_high="$header\n$res_high\n"
+		echor "$res_high" | column -t -s "|"
+		
+		res_med="$header\n$res_med\n"
+                echoy "$res_med" | column -t -s "|"
+
+		res_low="$header\n$res_low\n"
+                echog "$res_low" | column -t -s "|"
+
+	    ;;
             
 	    9) echoy Quitting; break;;
 	    *) echor Not a valid choice;;
