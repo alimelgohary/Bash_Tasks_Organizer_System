@@ -250,7 +250,26 @@ reports(){
 	    }' $db_path | column -t)
 	       echog "$res"
             ;;
-	    2);;
+	    2)
+    		header=$(head -1 $db_path)
+		today=$(date +%s)
+	        res=$(tail -n +2 $db_path | awk -F '|' -v today="$today" '
+	       	{
+		    cmd="date -d " $4 " +%s"
+		    cmd | getline task_due
+		    close(cmd)
+
+		    if(task_due <= today && $5 != "done"){
+		        print $0
+		    }
+		}')
+		num=$(echo "$res" | wc -l)
+		res="$header\n$res"
+                
+		echoy ===== You have $num unfinished overdue tasks =====
+		
+		echor "$res" | column -t -s "|"
+	    ;;
 	    3);;
             
 	    9) echoy Quitting; break;;
