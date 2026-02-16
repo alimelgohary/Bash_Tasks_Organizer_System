@@ -57,7 +57,7 @@ add_task(){
     status="pending"
     tid=1
     tid=$(awk 'BEGIN {FS="|"; } END { print $1 }' $db_path)
-    if [[ $tid == "id" ]]; then tid=0; fi
+    if [[ $tid == "ID" ]]; then tid=0; fi
     
     tid=$(($tid+1))
 
@@ -70,7 +70,6 @@ add_task(){
 list_tasks(){
     echog ======= List Tasks =======
     cat $db_path | column -t -s "|"
-    header=$(head -1 $db_path)
 
     while [ 1 ]
     do
@@ -203,7 +202,7 @@ delete_task(){
     read -p "Are you sure? This Action is irreversable (y or n): " choice
     if [[ $choice == "y" ]]; then
         task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
-        if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
+        if [[ $task == "" || $id == "ID" ]]; then echor "No record found"; return 1; fi
         sed -i "/$task/d" $db_path
         echog "Task deleted successfully" 
     fi
@@ -212,7 +211,6 @@ delete_task(){
 search_tasks(){
     echog ======= Search Tasks =======
     read -p "Enter search term: " query
-    header=$(head -1 $db_path)
     query=${query,,}
     res=$(tail -n +2 $db_path | awk -F '|' -v q="$query" 'tolower($2) ~ q')
     echo -e "$header\n$res" | column -t -s "|"
@@ -251,7 +249,6 @@ reports(){
 	       echog "$res"
             ;;
 	    2)
-    		header=$(head -1 $db_path)
 		today=$(date +%s)
 	        res=$(tail -n +2 $db_path | awk -F '|' -v today="$today" '
 	       	{
@@ -263,7 +260,7 @@ reports(){
 		        print $0
 		    }
 		}')
-		num=$(echo "$res" | wc -l)
+		num=$(echo "$res" | grep -v '^$' | wc -l)
 		res="$header\n$res"
                 
 		echoy ===== You have $num unfinished overdue tasks =====
@@ -273,16 +270,14 @@ reports(){
 
 	    3)
 		echog ===== Priority Report =====
-    		header=$(head -1 $db_path)
 		
-		without_header=$(tail -n +2 $db_path)
-		res_high=$(echo -e "$without_header" | awk -F '|' '$3 == "high"')
-	        res_med=$(echo -e "$without_header" | awk -F '|' '$3 == "medium"')
-	        res_low=$(echo -e "$without_header" | awk -F '|' '$3 == "low"')
-
-	  	echor "You have $(echo -e "$res_high" | wc -l) high priority tasks"
-		echoy "You have $(echo -e "$res_med" | wc -l) medium priority tasks"
-		echog "You have $(echo -e "$res_low" | wc -l) low priority tasks"
+		res_high=$(awk -F '|' '$3 == "high"' $db_path)
+	        res_med=$(awk -F '|' '$3 == "medium"' $db_path)
+	        res_low=$(awk -F '|' '$3 == "low"' $db_path)
+		
+	  	echor "You have $(echo -e "$res_high" | grep -v '^$' | wc -l) high priority tasks"
+		echoy "You have $(echo -e "$res_med" | grep -v '^$' | wc -l) medium priority tasks"
+		echog "You have $(echo -e "$res_low" | grep -v '^$' | wc -l) low priority tasks"
                 echo
 
 		res_high="$header\n$res_high\n"
@@ -307,14 +302,13 @@ reports(){
 
 db_path="$(pwd)/tasks_db"
 test -f $db_path
-
 if [ $? -eq 0 ]; then
     echog ===== using tasks from $db_path =====
 else
-    echo "id|title|priority|date|status" > $db_path
+    echo "ID|TITLE|PRIORITY|DATE|STATUS" > $db_path
     echog ===== Created tasks in $db_path =====
 fi
-
+header=$(head -1 $db_path)
 choice=0
 while [ 1 ]
 do
