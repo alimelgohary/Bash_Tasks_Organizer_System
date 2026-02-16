@@ -217,6 +217,50 @@ search_tasks(){
     res=$(tail -n +2 $db_path | awk -F '|' -v q="$query" 'tolower($2) ~ q')
     echo -e "$header\n$res" | column -t -s "|"
 }
+reports(){
+    while [[ 1 ]] do
+        echo 1 Task Summary 
+        echo 2 Overdue Tasks
+        echo 3 Priority Report
+        echo 9 Quit
+        read -p "Enter report type: " choice
+        clear
+	case $choice in
+	    1)
+	        res=$(awk -F '|' '
+		BEGIN {
+		print "PENDING", "IN-PROGRESS","DONE";
+		    sum1=0;
+		    sum2=0;
+		    sum3=0;
+	        } {
+		 if($5 == "pending"){
+		     sum1 = sum1 + 1;
+		 }
+		 else if ($5 == "in-progress"){
+		     sum2 = sum2 + 1;
+		 }
+		 else if ($5 == "done"){
+		     sum3 = sum3 + 1;
+		 }
+	
+	
+   	        } END {
+		    print sum1,sum2,sum3
+	    }' $db_path | column -t)
+	       echog "$res"
+            ;;
+	    2);;
+	    3);;
+            
+	    9) echoy Quitting; break;;
+	    *) echor Not a valid choice;;
+	    
+
+	esac
+    echo -e "\n"
+    done
+}
 
 db_path="$(pwd)/tasks_db"
 test -f $db_path
@@ -236,6 +280,7 @@ do
     echob 3 Update Task
     echob 4 Delete Task
     echob 5 Search
+    echob 6 Reports
     echob 9 Quit
     read -p "Enter your Choice: " choice
     clear
@@ -246,6 +291,7 @@ do
 	3) update_task;;
 	4) delete_task;;
 	5) search_tasks;;
+	6) reports;;
 	9) echoy Quitting; break;;
 	*) echor Not a valid choice;;
     esac
