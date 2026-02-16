@@ -142,62 +142,56 @@ update_task(){
         echo 9 Quit
         read -p "Enter your update choice: " update_choice
 
-        # If not a number
-        if [[ ! "$update_choice" =~ ^[0-9]+$ ]]; then
-            echor Not a valid choice
-        elif [[ $update_choice -eq 1 ]]; then
-	    read -p "Enter new title: " title
-            valid "$title"
-            if [[ $? -eq 1 ]]; then
-                continue
-            fi
-            new=$(awk -F '|' -v id="$id" -v title="$title" -v OFS="|" '$1 == id {$2=title;print $0}' $db_path)
-	    sed -i "s/$task/$new/" $db_path
-            echog "Record updated successfully" 
+	case $update_choice in
+	    1) read -p "Enter new title: " title
+               valid "$title"
+               if [[ $? -eq 1 ]]; then
+                   continue
+               fi
+               new=$(awk -F '|' -v id="$id" -v title="$title" -v OFS="|" '$1 == id {$2=title;print $0}' $db_path)
+	       sed -i "s/$task/$new/" $db_path
+               echog "Record updated successfully" 
+            ;;
 
-        elif [[ $update_choice -eq 2 ]]; then
-	    read -p "Enter new priority (h, m, l): " pr
+            2) read -p "Enter new priority (h, m, l): " pr
 
-            if [[ $pr == "h" ]]; then priority="high";
-            elif [[ $pr == "m" ]]; then priority="medium";
-    	    elif [[ $pr == "l" ]]; then priority="low"; 
-            else echor "Not a valid priority"; continue; fi
+               if [[ $pr == "h" ]]; then priority="high";
+               elif [[ $pr == "m" ]]; then priority="medium";
+    	       elif [[ $pr == "l" ]]; then priority="low"; 
+               else echor "Not a valid priority"; continue; fi
             
-            new=$(awk -F '|' -v id="$id" -v pri="$priority" -v OFS="|" '$1 == id {$3=pri;print $0}' $db_path)
-	    sed -i "s/$task/$new/" $db_path
+               new=$(awk -F '|' -v id="$id" -v pri="$priority" -v OFS="|" '$1 == id {$3=pri;print $0}' $db_path)
+	       sed -i "s/$task/$new/" $db_path
+            ;;
 
-        elif [[ $update_choice -eq 3 ]]; then
-        
-	    read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
-            if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
-            echo Entered due date is: $dt
-            dt=$(date -d $dt +%F)
-	    date -d $dt >/dev/null 2>&1
+            3) read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
+               if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
+               echo Entered due date is: $dt
+               dt=$(date -d $dt +%F)
+	       date -d $dt >/dev/null 2>&1
             
-            if [[ $? -eq 1 ]]; then echor "Not a valid date"; continue; fi
+               if [[ $? -eq 1 ]]; then echor "Not a valid date"; continue; fi
             
-	    new=$(awk -F '|' -v id="$id" -v dt="$dt" -v OFS="|" '$1 == id {$4=dt;print $0}' $db_path)
-	    sed -i "s/$task/$new/" $db_path
-            
+	       new=$(awk -F '|' -v id="$id" -v dt="$dt" -v OFS="|" '$1 == id {$4=dt;print $0}' $db_path)
+	       sed -i "s/$task/$new/" $db_path
+	   ;;
 
-        elif [[ $update_choice -eq 4 ]]; then
-	    read -p "Enter new status (p: pending, i: in-progress, d: done): " st
+   	    4) read -p "Enter new status (p: pending, i: in-progress, d: done): " st
 
-            if [[ $st == "p" ]]; then stat="pending";
-            elif [[ $st == "i" ]]; then stat="in-progress";
-    	    elif [[ $st == "d" ]]; then stat="done"; 
-            else echor "Not a valid status"; continue; fi
+               if [[ $st == "p" ]]; then stat="pending";
+               elif [[ $st == "i" ]]; then stat="in-progress";
+    	       elif [[ $st == "d" ]]; then stat="done"; 
+               else echor "Not a valid status"; continue; fi
             
-            new=$(awk -F '|' -v id="$id" -v stat="$stat" -v OFS="|" '$1 == id {$5=stat;print $0}' $db_path)
-	    sed -i "s/$task/$new/" $db_path
-            
+               new=$(awk -F '|' -v id="$id" -v stat="$stat" -v OFS="|" '$1 == id {$5=stat;print $0}' $db_path)
+	       sed -i "s/$task/$new/" $db_path
+	    ;;
 
-        elif [[ $update_choice -eq 9 ]]; then
-            echoy Quitting
-            break
-        else
-            echor Not a valid choice
-        fi
+    	   9) echoy Quitting; break;;
+           *) echor Not a valid choice ;;
+
+	esac
+
         echoy "\n---------------\n"
     done
 }
@@ -243,29 +237,14 @@ do
     read -p "Enter your Choice: " choice
     clear
 
-    # If not a number
-    if [[ ! "$choice" =~ ^[0-9]+$ ]]; then
-	echor Not a valid choice
-    elif [ $choice -eq 1 ]; then
-	add_task
-
-    elif [ $choice -eq 2 ]; then
-    	list_tasks
-
-    elif [ $choice -eq 3 ]; then
-    	update_task
-
-    elif [ $choice -eq 4 ]; then
-    	delete_task
-
-    elif [ $choice -eq 5 ]; then
-    	search_tasks
-
-    elif [ $choice -eq 9 ]; then
-    	echoy Quitting
-	break
-    else
-	echor Not a valid choice
-    fi
+    case $choice in
+	1) add_task;;
+        2) list_tasks;;
+	3) update_task;;
+	4) delete_task;;
+	5) search_tasks;;
+	9) echoy Quitting; break;;
+	*) echor Not a valid choice;;
+    esac
     echoy "\n---------------\n"
 done
