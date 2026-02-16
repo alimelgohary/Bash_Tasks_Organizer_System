@@ -70,11 +70,63 @@ add_task(){
 list_tasks(){
     echog ======= List Tasks =======
     cat $db_path | column -t -s "|"
+    header=$(head -1 $db_path)
+
+    while [ 1 ]
+    do
+        echo -e "\n"
+	echo 0 All
+        echo 1 Priority high only
+        echo 2 Priority medium only
+        echo 3 Priority low only
+        echo 4 Status pending only
+        echo 5 Status in-progress only
+        echo 6 Status done only
+	echo 9 Quit
+
+        read -p "Enter filtering choice: " choice
+	clear
+	if [[ ! "$choice" =~ ^[0-9]+$ ]]; then
+            echor Not a valid choice
+
+        elif [[ $choice -eq 0 ]]; then
+	    cat $db_path | column -t -s "|"
+
+        elif [[ $choice -eq 1 ]]; then
+            res=$(awk -F '|' '$3 == "high"' $db_path)
+	    echo -e "$header\n$res" | column -t -s "|"
+	    
+        elif [[ $choice -eq 2 ]]; then
+	    res=$(awk -F '|' '$3 == "medium"' $db_path)
+            echo -e "$header\n$res" | column -t -s "|"
+
+        elif [[ $choice -eq 3 ]]; then
+	    res=$(awk -F '|' '$3 == "low"' $db_path)
+            echo -e "$header\n$res" | column -t -s "|"
+
+        elif [[ $choice -eq 4 ]]; then
+	    res=$(awk -F '|' '$5 == "pending"' $db_path)
+            echo -e "$header\n$res" | column -t -s "|"
+
+        elif [[ $choice -eq 5 ]]; then
+	    res=$(awk -F '|' '$5 == "in-progress"' $db_path)
+            echo -e "$header\n$res" | column -t -s "|"
+
+        elif [[ $choice -eq 6 ]]; then
+	    res=$(awk -F '|' '$5 == "done"' $db_path)
+            echo -e "$header\n$res" | column -t -s "|"
+
+        elif [[ $choice -eq 9 ]]; then
+    	    break
+    	fi
+    done
 }
 
 update_task(){
     echog ======= Update Task =======
-    list_tasks
+    cat $db_path | column -t -s "|"
+    echo -e "\n"
+
     read -p "Enter id of the task to be updated: " id
     task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
     if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
@@ -217,6 +269,3 @@ do
     fi
     echoy "\n---------------\n"
 done
-
-
-
