@@ -45,15 +45,19 @@ add_task(){
     elif [[ $pr == "m" ]]; then priority="medium";
     elif [[ $pr == "l" ]]; then priority="low"; 
     else echor "Not a valid priority"; return 1; fi
-    
+    regex="^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
     read -p "Enter Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
-    if [[ $dt =~ ^[0-9]+$ ]]; then dt=$(date -d "+$dt days" +%F); fi
-    echo Entered due date is: $dt
-    dt=$(date -d $dt +%F)
-    date -d $dt >/dev/null 2>&1
-    
-    if [[ $? -eq 1 ]]; then echor "Not a valid date"; return 1; fi
+    if [[ $dt =~ ^[0-9]+$ ]]; then
+	dt=$(date -d "+$dt days" +%F);
 
+    elif [[ $dt =~  $regex ]]; then
+	date -d $dt >/dev/null 2>&1
+	if [[ $? -eq 1 ]]; then echor "Not a valid date"; return 1; fi
+    else
+	echor "Not a valid date"; return 1;
+    fi
+    echo Entered due date is: $dt
+    
     status="pending"
     tid=1
     tid=$(awk 'BEGIN {FS="|"; } END { print $1 }' $db_path)
