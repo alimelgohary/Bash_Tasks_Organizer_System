@@ -198,12 +198,15 @@ update_task(){
 
 delete_task(){
     echog ======= Delete Task =======
-    list_tasks
+    cat $db_path | column -t -s "|"
     read -p "Enter id of the task to be deleted: " id
-    task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
-    if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
-    sed -i "/$task/d" $db_path
-    echog "Task deleted successfully" 
+    read -p "Are you sure? This Action is irreversable (y or n): " choice
+    if [[ $choice == "y" ]]; then
+        task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+        if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
+        sed -i "/$task/d" $db_path
+        echog "Task deleted successfully" 
+    fi
 }
 
 search_tasks(){
