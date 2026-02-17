@@ -168,7 +168,7 @@ update_task(){
             ;;
 
             3) read -p "Enter new Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
-           
+               regex="^[0-9]{4}-[0-9]{2}-[0-9]{2}$"   
 	       if [[ $dt =~ ^[0-9]+$ ]]; then
 	           dt=$(date -d "+$dt days" +%F);
 
