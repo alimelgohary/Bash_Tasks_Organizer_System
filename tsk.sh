@@ -96,28 +96,28 @@ list_tasks(){
 	    cat "$db_path" | column -t -s "|"
 
         elif [[ $choice -eq 1 ]]; then
-            res=$(awk -F '|' '$3 == "high"' "$db_path")
-	    echo -e "$header\n$res" | column -t -s "|"
+            res=$(awk -F '|' '$3 == "high" || NR == 1' "$db_path")
+	    echo -e "$res" | column -t -s "|"
 	    
         elif [[ $choice -eq 2 ]]; then
-	    res=$(awk -F '|' '$3 == "medium"' "$db_path")
-            echo -e "$header\n$res" | column -t -s "|"
+	    res=$(awk -F '|' '$3 == "medium" || NR == 1' "$db_path")
+            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 3 ]]; then
-	    res=$(awk -F '|' '$3 == "low"' "$db_path")
-            echo -e "$header\n$res" | column -t -s "|"
+	    res=$(awk -F '|' '$3 == "low" || NR == 1' "$db_path")
+            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 4 ]]; then
-	    res=$(awk -F '|' '$5 == "pending"' "$db_path")
-            echo -e "$header\n$res" | column -t -s "|"
+	    res=$(awk -F '|' '$5 == "pending" || NR == 1' "$db_path")
+            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 5 ]]; then
-	    res=$(awk -F '|' '$5 == "in-progress"' "$db_path")
-            echo -e "$header\n$res" | column -t -s "|"
+	    res=$(awk -F '|' '$5 == "in-progress" || NR == 1' "$db_path")
+            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 6 ]]; then
-	    res=$(awk -F '|' '$5 == "done"' "$db_path")
-            echo -e "$header\n$res" | column -t -s "|"
+	    res=$(awk -F '|' '$5 == "done" || NR == 1' "$db_path")
+            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 9 ]]; then
     	    break
@@ -220,10 +220,9 @@ delete_task(){
 
 search_tasks(){
     echog ======= Search Tasks =======
-    read -p "Enter search term: " query
+    read -p "Enter search term/regex (case insensitive): " query
     query=${query,,}
-    res=$(tail -n +2 "$db_path" | awk -F '|' -v q="$query" 'tolower($2) ~ q')
-    echo -e "$header\n$res" | column -t -s "|"
+    awk -F '|' -v q="$query" 'tolower($2) ~ q || NR == 1' "$db_path" | column -t -s "|"
 }
 reports(){
     while [[ 1 ]] do
@@ -260,18 +259,21 @@ reports(){
             ;;
 	    2)
 		today=$(date +%s)
-	        res=$(tail -n +2 "$db_path" | awk -F '|' -v today="$today" '
+	        res=$(awk -F '|' -v today="$today" '
 	       	{
-		    cmd="date -d " $4 " +%s"
-		    cmd | getline task_due
-		    close(cmd)
+		    if (NR == 1) { print $0 }
+	            else {
+		        cmd="date -d " $4 " +%s"
+		        cmd | getline task_due
+		        close(cmd)
 
-		    if(task_due <= today && $5 != "done"){
-		        print $0
+		        if(task_due <= today && $5 != "done"){
+		            print $0
+		        }
 		    }
-		}')
-		num=$(echo "$res" | grep -v '^$' | wc -l)
-		res="$header\n$res"
+		}' "$db_path")
+		num=$(echo -e "$res" | wc -l)
+		num=$((num-1))
                 
 		echoy ===== You have $num unfinished overdue tasks =====
 		
@@ -281,22 +283,25 @@ reports(){
 	    3)
 		echog ===== Priority Report =====
 		
-		res_high=$(awk -F '|' '$3 == "high"' "$db_path")
-	        res_med=$(awk -F '|' '$3 == "medium"' "$db_path")
-	        res_low=$(awk -F '|' '$3 == "low"' "$db_path")
+		res_high=$(awk -F '|' '$3 == "high" || NR == 1' "$db_path")
+	        res_med=$(awk -F '|' '$3 == "medium" || NR == 1' "$db_path")
+	        res_low=$(awk -F '|' '$3 == "low" || NR == 1' "$db_path")
 		
-	  	echor "You have $(echo -e "$res_high" | grep -v '^$' | wc -l) high priority tasks"
-		echoy "You have $(echo -e "$res_med" | grep -v '^$' | wc -l) medium priority tasks"
-		echog "You have $(echo -e "$res_low" | grep -v '^$' | wc -l) low priority tasks"
+		res_high_count=$(echo -e "$res_high" | wc -l)
+		echor "You have $(( $res_high_count-1  )) high priority tasks"
+
+		
+		res_med_count=$(echo -e "$res_med" | wc -l)
+		echoy "You have $(( $res_med_count-1 )) medium priority tasks"
+
+		res_low_count=$(echo -e "$res_low" | wc -l)
+		echog "You have $(( $res_low_count-1 )) low priority tasks"
                 echo
 
-		res_high="$header\n$res_high\n"
 		echor "$res_high" | column -t -s "|"
-		
-		res_med="$header\n$res_med\n"
+		echo
                 echoy "$res_med" | column -t -s "|"
-
-		res_low="$header\n$res_low\n"
+		echo
                 echog "$res_low" | column -t -s "|"
 
 	    ;;
@@ -323,7 +328,6 @@ else
     echo "ID|TITLE|PRIORITY|DATE|STATUS" > "$db_path"
     echog ===== Created tasks in "$db_path" =====
 fi
-header=$(head -1 "$db_path")
 choice=0
 while [ 1 ]
 do
