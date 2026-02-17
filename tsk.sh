@@ -60,20 +60,20 @@ add_task(){
     
     status="pending"
     tid=1
-    tid=$(awk 'BEGIN {FS="|"; } END { print $1 }' $db_path)
+    tid=$(awk 'BEGIN {FS="|"; } END { print $1 }' "$db_path")
     if [[ $tid == "ID" ]]; then tid=0; fi
     
     tid=$(($tid+1))
 
     echog "$tid|$title|$priority|$dt|$status"
-    echo "$tid|$title|$priority|$dt|$status" >> $db_path
+    echo "$tid|$title|$priority|$dt|$status" >> "$db_path"
     echog "Task added successfully"
     
 }
 
 list_tasks(){
     echog ======= List Tasks =======
-    cat $db_path | column -t -s "|"
+    cat "$db_path" | column -t -s "|"
 
     while [ 1 ]
     do
@@ -93,30 +93,30 @@ list_tasks(){
             echor Not a valid choice
 
         elif [[ $choice -eq 0 ]]; then
-	    cat $db_path | column -t -s "|"
+	    cat "$db_path" | column -t -s "|"
 
         elif [[ $choice -eq 1 ]]; then
-            res=$(awk -F '|' '$3 == "high"' $db_path)
+            res=$(awk -F '|' '$3 == "high"' "$db_path")
 	    echo -e "$header\n$res" | column -t -s "|"
 	    
         elif [[ $choice -eq 2 ]]; then
-	    res=$(awk -F '|' '$3 == "medium"' $db_path)
+	    res=$(awk -F '|' '$3 == "medium"' "$db_path")
             echo -e "$header\n$res" | column -t -s "|"
 
         elif [[ $choice -eq 3 ]]; then
-	    res=$(awk -F '|' '$3 == "low"' $db_path)
+	    res=$(awk -F '|' '$3 == "low"' "$db_path")
             echo -e "$header\n$res" | column -t -s "|"
 
         elif [[ $choice -eq 4 ]]; then
-	    res=$(awk -F '|' '$5 == "pending"' $db_path)
+	    res=$(awk -F '|' '$5 == "pending"' "$db_path")
             echo -e "$header\n$res" | column -t -s "|"
 
         elif [[ $choice -eq 5 ]]; then
-	    res=$(awk -F '|' '$5 == "in-progress"' $db_path)
+	    res=$(awk -F '|' '$5 == "in-progress"' "$db_path")
             echo -e "$header\n$res" | column -t -s "|"
 
         elif [[ $choice -eq 6 ]]; then
-	    res=$(awk -F '|' '$5 == "done"' $db_path)
+	    res=$(awk -F '|' '$5 == "done"' "$db_path")
             echo -e "$header\n$res" | column -t -s "|"
 
         elif [[ $choice -eq 9 ]]; then
@@ -127,16 +127,16 @@ list_tasks(){
 
 update_task(){
     echog ======= Update Task =======
-    cat $db_path | column -t -s "|"
+    cat "$db_path" | column -t -s "|"
     echo -e "\n"
 
     read -p "Enter id of the task to be updated: " id
-    task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+    task=$(awk -F '|' -v id="$id" '$1 == id' "$db_path")
     if [[ $task == "" || $id == "id" ]]; then echor "No record found"; return 1; fi
     
     while [ 1 ]
     do
-        task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+        task=$(awk -F '|' -v id="$id" '$1 == id' "$db_path")
 	echog $task
         echo 1 Update title
         echo 2 Update priority
@@ -151,8 +151,8 @@ update_task(){
                if [[ $? -eq 1 ]]; then
                    continue
                fi
-               new=$(awk -F '|' -v id="$id" -v title="$title" -v OFS="|" '$1 == id {$2=title;print $0}' $db_path)
-	       sed -i "s/$task/$new/" $db_path
+               new=$(awk -F '|' -v id="$id" -v title="$title" -v OFS="|" '$1 == id {$2=title;print $0}' "$db_path")
+	       sed -i "s/$task/$new/" "$db_path"
                echog "Record updated successfully" 
             ;;
 
@@ -163,8 +163,8 @@ update_task(){
     	       elif [[ $pr == "l" ]]; then priority="low"; 
                else echor "Not a valid priority"; continue; fi
             
-               new=$(awk -F '|' -v id="$id" -v pri="$priority" -v OFS="|" '$1 == id {$3=pri;print $0}' $db_path)
-	       sed -i "s/$task/$new/" $db_path
+               new=$(awk -F '|' -v id="$id" -v pri="$priority" -v OFS="|" '$1 == id {$3=pri;print $0}' "$db_path")
+	       sed -i "s/$task/$new/" "$db_path"
             ;;
 
             3) read -p "Enter new Due Date: yyyy-mm-dd, you can also write a number to represent days after today: " dt
@@ -181,8 +181,8 @@ update_task(){
                fi
                echo Entered due date is: $dt 
 	       
-	       new=$(awk -F '|' -v id="$id" -v dt="$dt" -v OFS="|" '$1 == id {$4=dt;print $0}' $db_path)
-	       sed -i "s/$task/$new/" $db_path
+	       new=$(awk -F '|' -v id="$id" -v dt="$dt" -v OFS="|" '$1 == id {$4=dt;print $0}' "$db_path")
+	       sed -i "s/$task/$new/" "$db_path"
 	   ;;
 
    	    4) read -p "Enter new status (p: pending, i: in-progress, d: done): " st
@@ -192,8 +192,8 @@ update_task(){
     	       elif [[ $st == "d" ]]; then stat="done"; 
                else echor "Not a valid status"; continue; fi
             
-               new=$(awk -F '|' -v id="$id" -v stat="$stat" -v OFS="|" '$1 == id {$5=stat;print $0}' $db_path)
-	       sed -i "s/$task/$new/" $db_path
+               new=$(awk -F '|' -v id="$id" -v stat="$stat" -v OFS="|" '$1 == id {$5=stat;print $0}' "$db_path")
+	       sed -i "s/$task/$new/" "$db_path"
 	    ;;
 
     	   9) echoy Quitting; break;;
@@ -207,13 +207,13 @@ update_task(){
 
 delete_task(){
     echog ======= Delete Task =======
-    cat $db_path | column -t -s "|"
+    cat "$db_path" | column -t -s "|"
     read -p "Enter id of the task to be deleted: " id
     read -p "Are you sure? This Action is irreversable (y or n): " choice
     if [[ $choice == "y" ]]; then
-        task=$(awk -F '|' -v id="$id" '$1 == id' $db_path)
+        task=$(awk -F '|' -v id="$id" '$1 == id' "$db_path")
         if [[ $task == "" || $id == "ID" ]]; then echor "No record found"; return 1; fi
-        sed -i "/$task/d" $db_path
+        sed -i "/$task/d" "$db_path"
         echog "Task deleted successfully" 
     fi
 }
@@ -222,7 +222,7 @@ search_tasks(){
     echog ======= Search Tasks =======
     read -p "Enter search term: " query
     query=${query,,}
-    res=$(tail -n +2 $db_path | awk -F '|' -v q="$query" 'tolower($2) ~ q')
+    res=$(tail -n +2 "$db_path" | awk -F '|' -v q="$query" 'tolower($2) ~ q')
     echo -e "$header\n$res" | column -t -s "|"
 }
 reports(){
@@ -255,12 +255,12 @@ reports(){
 	
    	        } END {
 		    print sum1,sum2,sum3
-	    }' $db_path | column -t)
+	    }' "$db_path" | column -t)
 	       echog "$res"
             ;;
 	    2)
 		today=$(date +%s)
-	        res=$(tail -n +2 $db_path | awk -F '|' -v today="$today" '
+	        res=$(tail -n +2 "$db_path" | awk -F '|' -v today="$today" '
 	       	{
 		    cmd="date -d " $4 " +%s"
 		    cmd | getline task_due
@@ -281,9 +281,9 @@ reports(){
 	    3)
 		echog ===== Priority Report =====
 		
-		res_high=$(awk -F '|' '$3 == "high"' $db_path)
-	        res_med=$(awk -F '|' '$3 == "medium"' $db_path)
-	        res_low=$(awk -F '|' '$3 == "low"' $db_path)
+		res_high=$(awk -F '|' '$3 == "high"' "$db_path")
+	        res_med=$(awk -F '|' '$3 == "medium"' "$db_path")
+	        res_low=$(awk -F '|' '$3 == "low"' "$db_path")
 		
 	  	echor "You have $(echo -e "$res_high" | grep -v '^$' | wc -l) high priority tasks"
 		echoy "You have $(echo -e "$res_med" | grep -v '^$' | wc -l) medium priority tasks"
@@ -316,14 +316,14 @@ export_csv(){
 
 }
 db_path="$(pwd)/tasks_db"
-test -f $db_path
+test -f "$db_path"
 if [ $? -eq 0 ]; then
-    echog ===== using tasks from $db_path =====
+    echog ===== using tasks from "$db_path" =====
 else
-    echo "ID|TITLE|PRIORITY|DATE|STATUS" > $db_path
-    echog ===== Created tasks in $db_path =====
+    echo "ID|TITLE|PRIORITY|DATE|STATUS" > "$db_path"
+    echog ===== Created tasks in "$db_path" =====
 fi
-header=$(head -1 $db_path)
+header=$(head -1 "$db_path")
 choice=0
 while [ 1 ]
 do
