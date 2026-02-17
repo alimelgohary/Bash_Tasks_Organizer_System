@@ -309,7 +309,12 @@ reports(){
     echo -e "\n"
     done
 }
+export_csv(){
+    read -p "Enter file name: " file
+    awk -F "|" -v OFS="," '{print $1, $2, $3, $4, $5}' "$db_path" > "$file"
+    echog "File saved successfully"
 
+}
 db_path="$(pwd)/tasks_db"
 test -f $db_path
 if [ $? -eq 0 ]; then
@@ -328,6 +333,7 @@ do
     echob 4 Delete Task
     echob 5 Search
     echob 6 Reports
+    echob 7 Export to csv
     echob 9 Quit
     read -p "Enter your Choice: " choice
     clear
@@ -339,6 +345,7 @@ do
 	4) delete_task;;
 	5) search_tasks;;
 	6) reports;;
+	7) export_csv;;
 	9) echoy Quitting; break;;
 	*) echor Not a valid choice;;
     esac
