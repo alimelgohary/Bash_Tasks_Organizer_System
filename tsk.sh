@@ -78,14 +78,14 @@ list_tasks(){
     while [ 1 ]
     do
         echo -e "\n"
-	echo 0 All
-        echo 1 Priority high only
-        echo 2 Priority medium only
-        echo 3 Priority low only
-        echo 4 Status pending only
-        echo 5 Status in-progress only
-        echo 6 Status done only
-	echo 9 Quit
+	echob 0 All
+        echog 1 Priority high only
+        echog 2 Priority medium only
+        echog 3 Priority low only
+        echoy 4 Status pending only
+        echoy 5 Status in-progress only
+        echoy 6 Status done only
+	echor 9 Quit
 
         read -p "Enter filtering choice: " choice
 	clear
@@ -142,7 +142,7 @@ update_task(){
         echo 2 Update priority
         echo 3 Update date
         echo 4 Update status
-        echo 9 Quit
+        echor 9 Quit
         read -p "Enter your update choice: " update_choice
 
 	case $update_choice in
@@ -229,7 +229,7 @@ reports(){
         echo 1 Task Summary 
         echo 2 Overdue Tasks
         echo 3 Priority Report
-        echo 9 Quit
+        echor 9 Quit
         read -p "Enter report type: " choice
         clear
 	case $choice in
@@ -331,14 +331,14 @@ fi
 choice=0
 while [ 1 ]
 do
-    echob 1 Add Task
-    echob 2 List Tasks
-    echob 3 Update Task
-    echob 4 Delete Task
-    echob 5 Search
-    echob 6 Reports
-    echob 7 Export to csv
-    echob 9 Quit
+    echog 1 Add Task
+    echog 2 List Tasks
+    echog 3 Update Task
+    echog 4 Delete Task
+    echoy 5 Search
+    echoy 6 Reports
+    echoy 7 Export to csv
+    echor 9 Quit
     read -p "Enter your Choice: " choice
     clear
 
