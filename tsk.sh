@@ -73,7 +73,8 @@ add_task(){
 
 list_tasks(){
     echog ======= List Tasks =======
-    cat "$db_path" | column -t -s "|"
+    res="$(cat "$db_path")"
+    echo -e "$res" | column -t -s "|"
 
     while [ 1 ]
     do
@@ -85,43 +86,58 @@ list_tasks(){
         echoy 4 Status pending only
         echoy 5 Status in-progress only
         echoy 6 Status done only
+	echob 11 Sort by priority
+	echob 22 Sort by date
 	echor 9 Quit
 
         read -p "Enter filtering choice: " choice
 	clear
 	if [[ ! "$choice" =~ ^[0-9]+$ ]]; then
             echor Not a valid choice
+	    
+        elif [[ $choice -eq 9 ]]; then
+    	    break
 
         elif [[ $choice -eq 0 ]]; then
-	    cat "$db_path" | column -t -s "|"
+	    res=$(cat "$db_path")
 
         elif [[ $choice -eq 1 ]]; then
             res=$(awk -F '|' '$3 == "high" || NR == 1' "$db_path")
-	    echo -e "$res" | column -t -s "|"
 	    
         elif [[ $choice -eq 2 ]]; then
 	    res=$(awk -F '|' '$3 == "medium" || NR == 1' "$db_path")
-            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 3 ]]; then
 	    res=$(awk -F '|' '$3 == "low" || NR == 1' "$db_path")
-            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 4 ]]; then
 	    res=$(awk -F '|' '$5 == "pending" || NR == 1' "$db_path")
-            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 5 ]]; then
 	    res=$(awk -F '|' '$5 == "in-progress" || NR == 1' "$db_path")
-            echo -e "$res" | column -t -s "|"
 
         elif [[ $choice -eq 6 ]]; then
 	    res=$(awk -F '|' '$5 == "done" || NR == 1' "$db_path")
-            echo -e "$res" | column -t -s "|"
 
-        elif [[ $choice -eq 9 ]]; then
-    	    break
+
+	elif [[ $choice -eq 11 ]]; then
+            
+	    sorted_res1="$(echo -e "$res" | awk -F '|' '$3 == "high" || NR == 1')"
+	    sorted_res2="$(echo -e "$res" | awk -F '|' '$3 == "medium"')"
+	    sorted_res3="$(echo -e "$res" | awk -F '|' '$3 == "low"')"
+	    echo -e "$sorted_res1\n$sorted_res2\n$sorted_res3" | column -t -s "|"
+	    continue
+
+	elif [[ $choice -eq 22 ]]; then
+  	    sorted_res="$(echo -e "$res" | tail -n +2 | sort -t '|' -k4,4)"
+	    echo -e "$(head -1 "$db_path")\n$sorted_res" | column -t -s "|"
+	    continue
+        else
+            echor Not a valid choice
+	    continue;
     	fi
+
+	echo -e "$res" | column -t -s "|"
     done
 }
 
