@@ -22,13 +22,17 @@ echob "         __/ |                             __/ |                        _
 echob "        |___/                             |___/                        |___/                          ";
 
 valid(){
-    if [[ "$1" == "" || ! "$1" =~ ^[a-zA-Z0-9[:space:]]*$ ]]; then
-	echor "Not a valid input"
-	return 1
-    else
-	echog "Valid input"
-	return 0
-    fi 
+        len=$(echo "$1" | wc -c)
+        if [[ "$1" == "" ]]; then echor "Input cannot be empty"; return 1; fi
+        if [[ $len -lt 3 ]]; then echor "Length must exceed 3 characters"; return 1; fi
+	if [[ "$1" =~ ^[0-9] ]]; then echor "Input cannot start with numbers"; return 1; fi
+        if [[ ! "$1" =~ ^[a-zA-Z0-9[:space:]]*$ ]]; then
+	    echor "Input can contain only alphanumeric characters and space" 
+            return 1
+	fi
+        echog "Valid input"
+        return 0
+     
 }
 
 add_task(){
