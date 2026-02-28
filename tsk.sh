@@ -238,7 +238,8 @@ search_tasks(){
     echog ======= Search Tasks =======
     read -p "Enter search term/regex (case insensitive): " query
     query=${query,,}
-    awk -F '|' -v q="$query" 'tolower($2) ~ q || NR == 1' "$db_path" | column -t -s "|"
+    awk -F '|' -v q="$query" 'tolower($2) ~ q || NR == 1' "$db_path" 2>/dev/null | column -t -s "|" 
+    if [ "${PIPESTATUS[0]}" -ne 0 ]; then echor "Error parsing the regex"; fi
 }
 reports(){
     while [[ 1 ]] do
