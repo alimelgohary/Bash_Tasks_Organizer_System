@@ -22,7 +22,7 @@ echob "         __/ |                             __/ |                        _
 echob "        |___/                             |___/                        |___/                          ";
 
 valid(){
-    if [[ "$1" == "" || ! "$1" =~ ^[a-zA-Z0-9]+$ ]]; then
+    if [[ "$1" == "" || ! "$1" =~ ^[a-zA-Z0-9[:space:]]*$ ]]; then
 	echor "Not a valid input"
 	return 1
     else
