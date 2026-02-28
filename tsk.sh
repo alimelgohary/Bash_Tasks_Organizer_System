@@ -332,6 +332,11 @@ reports(){
 }
 export_csv(){
     read -p "Enter file name: " file
+    regex="^[a-zA-Z0-9._-]+$"
+    if [[ ! $file =~ $regex ]]; then 
+        echor Not a valid file name 
+	return 1;
+    fi
     awk -F "|" -v OFS="," '{print $1, $2, $3, $4, $5}' "$db_path" > "$file"
     echog "File saved successfully"
 
